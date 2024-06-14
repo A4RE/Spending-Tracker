@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct OnboardingView: View {
+    
+    @State private var showRegister = false
+    
     var body: some View {
         VStack {
             spacer
@@ -56,7 +59,9 @@ extension OnboardingView {
     }
     
     var nextButton: some View {
-        Button(action: /*@START_MENU_TOKEN@*/{}/*@END_MENU_TOKEN@*/, label: {
+        Button(action: {
+            showRegister.toggle()
+        }, label: {
             Text("Get Started")
                 .foregroundColor(.white)
                 .font(.system(size: 20.adjustSize(), weight: .heavy, design: .rounded))
@@ -65,6 +70,9 @@ extension OnboardingView {
                 .background(.black)
                 .clipShape(RoundedRectangle(cornerRadius: 30.adjustSize()))
                 
+        })
+        .fullScreenCover(isPresented: $showRegister, content: {
+            RegisterView()
         })
     }
     
