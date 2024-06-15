@@ -24,6 +24,7 @@ struct SecurityTextField: View {
                 TextField(placeHolder.rawValue, text: $password)
                     .foregroundColor(.cyan)
                     .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
             } else {
                 SecureField(placeHolder.rawValue, text: $password)
                     .foregroundColor(.cyan)

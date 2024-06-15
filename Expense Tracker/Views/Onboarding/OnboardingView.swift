@@ -72,7 +72,7 @@ extension OnboardingView {
                 
         })
         .fullScreenCover(isPresented: $showRegister, content: {
-            RegisterView()
+            RegisterViewWrapper()
         })
     }
     

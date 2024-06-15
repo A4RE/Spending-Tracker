@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 enum ShowHidePassword: String {
     case show = "eye"
@@ -15,11 +16,13 @@ enum ShowHidePassword: String {
 struct RegisterView: View {
     
     @Environment(\.dismiss) var dismiss
+    @Environment(\.scenePhase) var scenePhase
     
-    @State var profileName: String = ""
-    @State var password: String = ""
+    @ObservedObject private var regViewModel = RegisterViewModel()
+    @State private var selectedImage: UIImage? = nil
+    @State private var isPickerPresented: Bool = false
     
-    @State var textFieldsFull = false
+    private(set) var onComplete: () -> Void
     
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
@@ -34,6 +37,24 @@ struct RegisterView: View {
         }
         .padding(.top, 10.adjustSize())
         .padding(.horizontal, 16.adjustSize())
+        .alert(isPresented: $regViewModel.showAlert) {
+            Alert(
+                title: Text("Error"),
+                message: Text("Passwords isn't equal"),
+                dismissButton: .default(Text("OK"))
+            )
+        }
+        .sheet(isPresented: $isPickerPresented) {
+            PhotoPicker(selectedImage: $selectedImage)
+        }
+        .onChange(of: regViewModel.shouldNavigateToTabBar, { _, newValue in
+            if newValue {
+                onComplete()
+            }
+        })
+        .onTapGesture {
+            hideKeyboard()
+        }
     }
 }
 
@@ -66,34 +87,58 @@ private extension RegisterView {
     }
     
     var circle: some View {
-        Circle()
-            .frame(width: 100.adjustSize(), alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
-            .foregroundColor(.cyan)
+        ZStack {
+            if let image = selectedImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 100.adjustSize(), height: 100.adjustSize())
+                    .clipShape(Circle())
+            } else {
+                Circle()
+                    .frame(width: 100.adjustSize(), alignment: /*@START_MENU_TOKEN@*/.center/*@END_MENU_TOKEN@*/)
+                    .foregroundColor(.cyan)
+            }
+        }
+        .onTapGesture {
+            isPickerPresented = true
+        }
     }
     
     var textFieldBlock: some View {
         VStack {
-            TextField("Enter your profile name", text: $profileName)
+            TextField("Enter your profile name", text: $regViewModel.profileName)
                 .foregroundColor(.cyan)
                 .underlineTextField()
             
-            SecurityTextField(password: $password, placeHolder: .password)
+            SecurityTextField(password: $regViewModel.password, placeHolder: .password)
+            
+            SecurityTextField(password: $regViewModel.confirmPassword, placeHolder: .confirmPassword)
         }
     }
     
     var completeButton: some View {
-        Button(action: {}, label: {
-            Text("Create")
+        Button(action: {
+            regViewModel.checkPasswords()
+        }, label: {
+            Text("Create profile")
                 .frame(maxWidth: .infinity)
                 .font(.system(.title3, design: .default, weight: .medium))
                 .padding(.vertical, 20.adjustSize())
-                .background(textFieldsFull ? .cyan : Color.secondary)
-                .foregroundColor(textFieldsFull ? .white : .secondary)
+                .background(regViewModel.textFieldsAreFull ? .cyan : Color.secondary)
+                .foregroundColor(regViewModel.textFieldsAreFull ? .white : .secondary)
                 .clipShape(RoundedRectangle(cornerRadius: 15.adjustSize(), style: .continuous))
         })
     }
 }
 
-#Preview {
-    RegisterView()
+// MARK: Functions
+private extension RegisterView {
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
 }
+
+//#Preview {
+//    RegisterView()
+//}
